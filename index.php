@@ -264,7 +264,6 @@ $frase_del_dia = $frases[array_rand($frases)];
         </ul>
         <p>&copy; 2025 Domus Tienda. Todos los derechos reservados.</p>
         <p>Desarrollado por <a href="https://www.linkedin.com/in/francoparedes1992/" target="_blank" rel="noopener noreferrer">Franco Paredes</a>.</p>
-        <a href="login.php">Panel</a>
     </footer>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
