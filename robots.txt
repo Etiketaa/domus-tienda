@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /api/
+Disallow: /assets/
+Disallow: /config.php
+
+Disallow: /*.sql$
+
+# Reemplazar con la URL final del sitio
+Sitemap: URL_DE_TU_SITIO_WEB/sitemap.xml
