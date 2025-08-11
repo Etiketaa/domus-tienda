@@ -24,6 +24,47 @@ $top_viewed_result = $conn->query($top_viewed_query);
 $top_interacted_query = "SELECT p.name, COUNT(pi.id) as total_interactions FROM product_interactions pi JOIN products p ON pi.product_id = p.id WHERE pi.interaction_type IN ('detail_click', 'add_to_cart_click') GROUP BY pi.product_id ORDER BY total_interactions DESC LIMIT 5";
 $top_interacted_result = $conn->query($top_interacted_query);
 
+// --- Preparar datos para los gráficos ---
+$top_sold_labels = [];
+$top_sold_data = [];
+if ($top_products_result->num_rows > 0) {
+    while($row = $top_products_result->fetch_assoc()) {
+        $top_sold_labels[] = $row['name'];
+        $top_sold_data[] = $row['total_sold'];
+    }
+    // Reset pointer para usarlo en el HTML si es necesario
+    $top_products_result->data_seek(0);
+}
+
+$low_stock_labels = [];
+$low_stock_data = [];
+if ($low_stock_result->num_rows > 0) {
+    while($row = $low_stock_result->fetch_assoc()) {
+        $low_stock_labels[] = $row['name'];
+        $low_stock_data[] = $row['stock'];
+    }
+    $low_stock_result->data_seek(0);
+}
+
+$top_viewed_labels = [];
+$top_viewed_data = [];
+if ($top_viewed_result->num_rows > 0) {
+    while($row = $top_viewed_result->fetch_assoc()) {
+        $top_viewed_labels[] = $row['name'];
+        $top_viewed_data[] = $row['total_views'];
+    }
+    $top_viewed_result->data_seek(0);
+}
+
+$top_interacted_labels = [];
+$top_interacted_data = [];
+if ($top_interacted_result->num_rows > 0) {
+    while($row = $top_interacted_result->fetch_assoc()) {
+        $top_interacted_labels[] = $row['name'];
+        $top_interacted_data[] = $row['total_interactions'];
+    }
+    $top_interacted_result->data_seek(0);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -34,6 +75,7 @@ $top_interacted_result = $conn->query($top_interacted_query);
     <title>Domus Tienda - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dashboard-body">
     <div class="dashboard-container">
@@ -80,47 +122,19 @@ $top_interacted_result = $conn->query($top_interacted_query);
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h4>Top 5 Productos Más Vendidos</h4>
-                        <ul>
-                            <?php while($product = $top_products_result->fetch_assoc()): ?>
-                                <li>
-                                    <span class="stat-product-name"><?= htmlspecialchars($product['name']) ?></span>
-                                    <span class="stat-product-sold">Vendido: <?= $product['total_sold'] ?></span>
-                                </li>
-                            <?php endwhile; ?>
-                        </ul>
+                        <canvas id="top-sold-chart"></canvas>
                     </div>
                     <div class="stat-card">
                         <h4>Productos con Bajo Stock (<5)</h4>
-                        <ul>
-                             <?php while($product = $low_stock_result->fetch_assoc()): ?>
-                                <li>
-                                    <span class="stat-product-name"><?= htmlspecialchars($product['name']) ?></span>
-                                    <span class="stat-product-stock">Stock: <?= $product['stock'] ?></span>
-                                </li>
-                            <?php endwhile; ?>
-                        </ul>
+                        <canvas id="low-stock-chart"></canvas>
                     </div>
                     <div class="stat-card">
                         <h4>Top 5 Productos Más Vistos</h4>
-                        <ul>
-                            <?php while($product = $top_viewed_result->fetch_assoc()): ?>
-                                <li>
-                                    <span class="stat-product-name"><?= htmlspecialchars($product['name']) ?></span>
-                                    <span class="stat-product-views">Vistas: <?= $product['total_views'] ?></span>
-                                </li>
-                            <?php endwhile; ?>
-                        </ul>
+                        <canvas id="top-viewed-chart"></canvas>
                     </div>
                     <div class="stat-card">
                         <h4>Top 5 Productos con Más Interacción</h4>
-                        <ul>
-                            <?php while($product = $top_interacted_result->fetch_assoc()): ?>
-                                <li>
-                                    <span class="stat-product-name"><?= htmlspecialchars($product['name']) ?></span>
-                                    <span class="stat-product-interactions">Interacciones: <?= $product['total_interactions'] ?></span>
-                                </li>
-                            <?php endwhile; ?>
-                        </ul>
+                        <canvas id="top-interacted-chart"></canvas>
                     </div>
                 </div>
             </section>
@@ -266,6 +280,26 @@ $top_interacted_result = $conn->query($top_interacted_query);
         </main>
     </div>
 
+    <script>
+        const chartData = {
+            topSold: {
+                labels: <?= json_encode($top_sold_labels) ?>,
+                data: <?= json_encode($top_sold_data) ?>
+            },
+            lowStock: {
+                labels: <?= json_encode($low_stock_labels) ?>,
+                data: <?= json_encode($low_stock_data) ?>
+            },
+            topViewed: {
+                labels: <?= json_encode($top_viewed_labels) ?>,
+                data: <?= json_encode($top_viewed_data) ?>
+            },
+            topInteracted: {
+                labels: <?= json_encode($top_interacted_labels) ?>,
+                data: <?= json_encode($top_interacted_data) ?>
+            }
+        };
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="assets/js/dashboard.js"></script>
 </body>

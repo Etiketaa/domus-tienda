@@ -384,6 +384,101 @@ document.addEventListener('DOMContentLoaded', () => {
         // ... (código existente)
     }
 
+    // --- Creación de Gráficos --- //
+    function initializeCharts() {
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        };
+
+        // Gráfico de Top 5 Productos Más Vendidos
+        const topSoldCtx = document.getElementById('top-sold-chart')?.getContext('2d');
+        if (topSoldCtx && chartData.topSold.labels.length > 0) {
+            new Chart(topSoldCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.topSold.labels,
+                    datasets: [{
+                        label: 'Unidades Vendidas',
+                        data: chartData.topSold.data,
+                        backgroundColor: 'rgba(28, 157, 17, 0.7)',
+                        borderColor: 'rgba(28, 157, 17, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        // Gráfico de Productos con Bajo Stock
+        const lowStockCtx = document.getElementById('low-stock-chart')?.getContext('2d');
+        if (lowStockCtx && chartData.lowStock.labels.length > 0) {
+            new Chart(lowStockCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.lowStock.labels,
+                    datasets: [{
+                        label: 'Stock Actual',
+                        data: chartData.lowStock.data,
+                        backgroundColor: 'rgba(242, 132, 130, 0.7)',
+                        borderColor: 'rgba(242, 132, 130, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { ...chartOptions, indexAxis: 'y' } // Gráfico de barras horizontales
+            });
+        }
+
+        // Gráfico de Top 5 Productos Más Vistos
+        const topViewedCtx = document.getElementById('top-viewed-chart')?.getContext('2d');
+        if (topViewedCtx && chartData.topViewed.labels.length > 0) {
+            new Chart(topViewedCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.topViewed.labels,
+                    datasets: [{
+                        label: 'Vistas',
+                        data: chartData.topViewed.data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        // Gráfico de Top 5 Productos con Más Interacción
+        const topInteractedCtx = document.getElementById('top-interacted-chart')?.getContext('2d');
+        if (topInteractedCtx && chartData.topInteracted.labels.length > 0) {
+            new Chart(topInteractedCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.topInteracted.labels,
+                    datasets: [{
+                        label: 'Interacciones',
+                        data: chartData.topInteracted.data,
+                        backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+    }
+
     // --- Inicialización --- //
+    initializeCharts();
     changeSection('stats');
 });

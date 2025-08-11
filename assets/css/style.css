@@ -193,7 +193,7 @@ main {
     background-color: transparent;
     color: var(--texto-secundario);
     border: 1px solid var(--borde-suave);
-    padding: 0.6rem 1.2rem;
+    padding: 1rem 1.2rem;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -212,7 +212,7 @@ main {
     background-color: var(--acento-verde);
     color: var(--principal);
     border: none;
-    padding: 0.7rem 1.2rem;
+    padding: 1rem 1.2rem;
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -423,7 +423,7 @@ footer a:hover {
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
 }
 
@@ -600,7 +600,7 @@ footer a:hover {
 }
 
 /* Responsive adjustments for Dashboard */
-@media (max-width: 799px) {
+@media (max-width: 768px) {
     .dashboard-container {
         flex-direction: column;
     }
@@ -750,7 +750,7 @@ footer a:hover {
     }
 }
 
-@media (max-width: 799px) {
+@media (max-width: 768px) {
     .filter-sidebar {
         display: none; /* Ocultar el sidebar en pantallas pequeñas */
     }
@@ -778,11 +778,16 @@ footer a:hover {
     }
 
     .product-card h3 {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
 
     .product-card .price {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+    }
+
+    body {
+        font-size: 14px;
+        line-height: 1.5;
     }
 
     .header-logo {
@@ -1302,7 +1307,7 @@ footer a:hover {
     object-fit: cover;
 }
 
-@media (max-width: 799px) {
+@media (max-width: 768px) {
     .carousel-item-custom {
         max-height: 250px;
     }
@@ -1358,15 +1363,43 @@ footer a:hover {
     .input-group .form-control,
     .input-group .btn {
         border-radius: 8px !important; /* Menos redondeado en móvil */
+        font-size: 0.8rem; /* Reducir tamaño de fuente */
+        padding-top: 0.3rem; /* Reducir padding vertical */
+        padding-bottom: 0.3rem; /* Reducir padding vertical */
     }
 
     .input-group .form-control {
         border-top-right-radius: 8px !important;
         border-bottom-right-radius: 8px !important;
+        padding-left: 1rem;
     }
 
     .input-group .btn {
         border-top-left-radius: 8px !important;
         border-bottom-left-radius: 8px !important;
+        padding-right: 0.75rem;
+        padding-left: 0.75rem;
+    }
+}
+
+
+.social-icons-mobile {
+    display: none;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.social-icons-mobile a {
+    color: black;
+    margin: 0 1rem;
+    font-size: 24px;
+}
+
+@media (max-width: 700px) {
+    .social-icons-header {
+        display: none;
+    }
+    .social-icons-mobile {
+        display: block;
     }
 }

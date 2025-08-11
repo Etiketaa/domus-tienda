@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const mainImageUrl = product.image_url || 'assets/images/placeholder.png';
 
                 const modalImage = $('#modal-product-image');
-                modalImage.attr('src', mainImageUrl);
+                modalImage.attr('src', mainImageUrl).attr('loading', 'lazy');
                 
                 $('#modal-product-name').text(product.name);
                 $('#modal-product-description').text(product.description || 'No hay descripción disponible.');
@@ -331,12 +331,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 gallery.html(''); // Limpiar galería anterior
 
                 // Añadir la imagen principal como la primera miniatura
-                gallery.append(`<img src="${mainImageUrl}" alt="${product.name}" class="active-thumb">`);
+                gallery.append(`<img src="${mainImageUrl}" alt="${product.name}" class="active-thumb" loading="lazy">`);
 
                 // Añadir imágenes adicionales
                 if (product.additional_images && product.additional_images.length > 0) {
                     product.additional_images.forEach(img => {
-                        gallery.append(`<img src="${img.image_url}" alt="${product.name}">`);
+                        gallery.append(`<img src="${img.image_url}" alt="${product.name}" loading="lazy">`);
                     });
                 }
 
@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (index === 0) {
                         carouselItem.classList.add('active');
                     }
-                    carouselItem.innerHTML = `<img src="${image.image_url}" class="d-block w-100" alt="Promoción de sahumerios y velas">`;
+                    carouselItem.innerHTML = `<img src="${image.image_url}" class="d-block w-100" alt="Promoción de sahumerios y velas" loading="lazy">`;
                     carouselInner.appendChild(carouselItem);
                 });
 

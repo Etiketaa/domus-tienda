@@ -68,9 +68,9 @@ if ($result->num_rows > 0) {
 
         echo "<div class='product-card' data-brand='" . htmlspecialchars(strtolower($row['brand'] ?? '')) . "'>";
         if (!empty($row['image_url'])) {
-            echo "<img src='" . htmlspecialchars($row['image_url']) . "' alt='" . htmlspecialchars($row['name']) . "' loading='lazy'>";
+            echo "<img src='" . htmlspecialchars($row['image_url']) . "' alt='" . htmlspecialchars($row['name']) . "' class='img-fluid' loading='lazy'>";
         } else {
-            echo "<img src='assets/images/placeholder.png' alt='Imagen no disponible para " . htmlspecialchars($row['name']) . "' loading='lazy'>";
+            echo "<img src='assets/images/placeholder.png' alt='Imagen no disponible para " . htmlspecialchars($row['name']) . "' class='img-fluid' loading='lazy'>";
         }
         echo "<h3>" . htmlspecialchars($row['name']) . "</h3>";
         if (!empty($row['brand'])) {
