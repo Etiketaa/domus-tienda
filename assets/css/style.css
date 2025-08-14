@@ -263,7 +263,7 @@ main {
     align-items: center;
     cursor: pointer;
     box-shadow: var(--sombra-hover);
-    z-index: 1050; /* Aumentado para estar sobre otros elementos como el modal */
+    z-index: 1056; /* Aumentado para estar sobre otros elementos como el modal */
     transition: all 0.3s ease;
 }
 
