@@ -54,7 +54,6 @@ switch ($method) {
         }
         break;
     case 'DELETE':
-        verify_csrf_and_exit();
         handleDelete($conn);
         break;
     default:
@@ -123,8 +122,7 @@ function handleUpload($conn) {
 }
 
 function handleDelete($conn) {
-    parse_str(file_get_contents("php://input"), $_DELETE);
-    $image_id = filter_var($_DELETE['id'] ?? null, FILTER_VALIDATE_INT);
+    $image_id = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT);
 
     if (!$image_id) {
         http_response_code(400);
