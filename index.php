@@ -186,28 +186,39 @@ $frase_del_dia = $frases[array_rand($frases)];
                 </div>
             </div>
 
-            <div class="cart-sidebar" id="cart-sidebar">
-                <div class="cart-header">
-                    <h3>Tu Carrito</h3>
-                    <button class="close-cart-btn" id="close-cart-btn">&times;</button>
-                </div>
-                <div id="cart-items"></div>
-                <div class="cart-summary">
-                    <div class="customer-form">
-                        <h4>Tus Datos</h4>
-                        <form id="customer-data-form">
-                            <label for="customer-name">Nombre:</label>
-                            <input type="text" id="customer-name" name="name" required>
-                            <label for="customer-phone">Teléfono:</label>
-                            <input type="tel" id="customer-phone" name="phone" required>
-                            <label for="customer-address">Dirección:</label>
-                            <input type="text" id="customer-address" name="address">
-                        </form>
+            <!-- Cart Modal -->
+            <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="cartModalLabel">Tu Carrito</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="cart-items"></div>
+                            <div class="cart-summary">
+                                <div class="customer-form">
+                                    <h4>Tus Datos</h4>
+                                    <form id="customer-data-form">
+                                        <label for="customer-name">Nombre:</label>
+                                        <input type="text" id="customer-name" name="name" required>
+                                        <label for="customer-phone">Teléfono:</label>
+                                        <input type="tel" id="customer-phone" name="phone" required>
+                                        <label for="customer-address">Dirección:</label>
+                                        <input type="text" id="customer-address" name="address">
+                                    </form>
+                                </div>
+                                <p>Total: $<span id="cart-total">0,00</span></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Seguir comprando</button>
+                            <button type="button" class="btn btn-primary" id="checkout-btn">Confirmar Pedido</button>
+                        </div>
                     </div>
-                    <p>Total: $<span id="cart-total">0.00</span></p>
-                    <button id="checkout-btn">Confirmar Pedido</button>
                 </div>
             </div>
+
         </div>
     </main>
 

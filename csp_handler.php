@@ -15,7 +15,7 @@ function set_csp_header() {
 
         // Estilos permitidos: del propio dominio y de las CDNs de Bootstrap y Google Fonts.
         // 'unsafe-inline' es necesario para los estilos en línea de Bootstrap.
-        "style-src" => "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
+        "style-src" => "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com",
 
         // Imágenes permitidas: del propio dominio y de data URIs (para imágenes incrustadas).
         "img-src" => "'self' data:",

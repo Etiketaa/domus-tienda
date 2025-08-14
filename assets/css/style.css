@@ -233,45 +233,19 @@ main {
     background-color: #fdecea;
 }
 
-/* Cart Styles */
-.cart-sidebar {
-    position: fixed;
-    top: 0;
-    right: -100%; /* Oculto fuera de la pantalla */
-    width: 95%; /* Ancho adaptable */
-    max-width: 400px; /* Ancho máximo */
-    height: 100%; /* Ocupa toda la altura de la ventana */
-    background-color: var(--principal);
-    box-shadow: -5px 0 25px rgba(0,0,0,0.1);
-    transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
+/* Cart Modal Styles */
+#cartModal .modal-dialog {
+    max-width: 800px;
 }
 
-.cart-header {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--borde-suave);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.cart-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
+#cartModal .modal-body {
+    padding: 2rem;
 }
 
 #cart-items {
-    flex-grow: 1; /* El contenedor de items crece para ocupar el espacio */
-    overflow-y: auto; /* Habilita el scroll solo para los items */
-    padding: 1.5rem;
-    max-height: calc(100vh - 250px); /* Altura máxima calculada */
-}
-
-
-.cart-sidebar.open {
-    right: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
 }
 
 .open-cart-btn {
@@ -1119,7 +1093,7 @@ footer a:hover {
 }
 
 .cart-summary {
-    margin-top: auto; /* Empuja el resumen hacia abajo */
+    margin-top: 1.5rem;
     padding-top: 1.5rem;
     border-top: 2px solid var(--borde-suave);
 }
@@ -1154,28 +1128,12 @@ footer a:hover {
     background-color: #ccc;
 }
 
-.close-cart-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1.5rem;
-    background: none;
-    border: none;
-    font-size: 2rem;
-    color: var(--texto-secundario);
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
-
-.close-cart-btn:hover {
-    color: var(--texto-principal);
-}
-
 .customer-form {
     margin-bottom: 2rem;
     padding: 1.5rem;
 }
 
-.customer-form h3 {
+.customer-form h4 {
     margin-bottom: 1rem;
     font-size: 1.2rem;
 }
