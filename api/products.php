@@ -27,7 +27,7 @@ function render_product_card($product) {
     if ($is_ap_brand) {
         $html .= "<p class='price-ap'>Precio a consultar</p>";
     } else {
-        $html .= "<p class='price'>$" . number_format($product['price'], 2) . "</p>";
+        $html .= "<p class='price'>$" . number_format($product['price'], 2, ',', '.') . "</p>";
     }
 
     $html .= "<button class='details-btn' data-id='{$product['id']}'>Detalles</button>";
@@ -51,7 +51,7 @@ try {
             output_json(['success' => false, 'message' => 'ID de producto inválido.'], 400);
         }
 
-        $stmt = $conn->prepare("SELECT p.id, p.name, p.description, p.price, p.stock, c.name as category, b.name as brand, p.image_url FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id WHERE p.id = ?");
+        $stmt = $conn->prepare("SELECT id, name, description, price, stock, category, brand, image_url FROM products WHERE id = ?");
         $stmt->bind_param("i", $productId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -77,20 +77,20 @@ try {
     // Handle product grid request
     header('Content-Type: text/html; charset=utf-8');
 
-    $sql = "SELECT p.id, p.name, p.description, p.price, p.stock, c.name as category, b.name as brand, p.image_url FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id";
+    $sql = "SELECT id, name, description, price, stock, category, brand, image_url FROM products";
     $whereClauses = [];
     $params = [];
     $types = '';
 
     if (!empty($_GET['category']) && $_GET['category'] !== 'all') {
-        $whereClauses[] = "p.category_id = ?";
-        $params[] = intval($_GET['category']);
-        $types .= "i";
+        $whereClauses[] = "category = ?";
+        $params[] = $_GET['category'];
+        $types .= "s";
     }
 
     if (!empty($_GET['search'])) {
         $searchTerm = "%" . $_GET['search'] . "%";
-        $whereClauses[] = "(p.name LIKE ? OR p.description LIKE ?)";
+        $whereClauses[] = "(name LIKE ? OR description LIKE ?)";
         $params[] = $searchTerm;
         $params[] = $searchTerm;
         $types .= "ss";
@@ -100,7 +100,7 @@ try {
         $sql .= " WHERE " . implode(' AND ', $whereClauses);
     }
 
-    $sql .= " ORDER BY p.name";
+    $sql .= " ORDER BY name";
 
     $stmt = $conn->prepare($sql);
     if (!empty($params)) {

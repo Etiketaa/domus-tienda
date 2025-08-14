@@ -21,7 +21,7 @@ function set_csp_header() {
         "img-src" => "'self' data:",
 
         // Fuentes (tipografías) permitidas: del propio dominio y de Google Fonts.
-        "font-src" => "'self' https://fonts.gstatic.com",
+        "font-src" => "'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
 
         // Conexiones permitidas (AJAX, WebSockets): solo al propio dominio.
         "connect-src" => "'self'",
