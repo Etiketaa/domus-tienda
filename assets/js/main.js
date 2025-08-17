@@ -263,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const customerName = customerForm.querySelector('#customer-name').value.trim();
         const customerPhone = customerForm.querySelector('#customer-phone').value.trim();
         const customerAddress = customerForm.querySelector('#customer-address').value.trim();
+        const orderObservations = document.getElementById('order-observations').value.trim();
 
         if (cart.length === 0) {
             alert('Tu carrito está vacío.');
@@ -281,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const orderData = {
             customer: { name: customerName, phone: customerPhone, address: customerAddress },
             items: cart,
+            observaciones: orderObservations,
             total: parseFloat(cartTotalElement.textContent)
         };
 
@@ -292,7 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await response.json();
             if (data.success) {
-                alert(`¡Pedido #${data.order_id} realizado con éxito!`);
+                document.getElementById('order-observations').value = ''; // Limpiar campo
+                alert(data.message || `¡Pedido #${data.order_id} realizado con éxito!`);
                 cart = [];
                 saveCart();
                 renderCart();
@@ -307,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             checkoutBtn.classList.remove('loading');
             checkoutBtn.disabled = false;
-            checkoutBtn.textContent = 'Confirmar Pedido';
+            renderCart(); // Re-render para actualizar el estado del botón
         }
     };
 

@@ -1,3 +1,7 @@
+<?php
+require_once 'csp_handler.php';
+$nonce = set_csp_header();
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

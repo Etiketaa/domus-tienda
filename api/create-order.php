@@ -42,6 +42,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 $customer_name = htmlspecialchars(trim($data['customer']['name'] ?? ''), ENT_QUOTES, 'UTF-8');
 $customer_phone = htmlspecialchars(trim($data['customer']['phone'] ?? ''), ENT_QUOTES, 'UTF-8');
 $customer_address = htmlspecialchars(trim($data['customer']['address'] ?? ''), ENT_QUOTES, 'UTF-8');
+$observaciones = htmlspecialchars(trim($data['observaciones'] ?? ''), ENT_QUOTES, 'UTF-8');
 
 if (empty($customer_name) || empty($customer_phone)) {
     http_response_code(400);
@@ -133,8 +134,8 @@ $conn->begin_transaction();
 
 try {
     // Insertar el pedido principal
-    $stmt = $conn->prepare("INSERT INTO orders (customer_name, customer_phone, customer_address, total, status) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssids", $customer_name, $customer_phone, $customer_address, $calculated_total, $order_status);
+    $stmt = $conn->prepare("INSERT INTO orders (customer_name, customer_phone, customer_address, total, status, observaciones) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssidss", $customer_name, $customer_phone, $customer_address, $calculated_total, $order_status, $observaciones);
     $stmt->execute();
     $order_id = $conn->insert_id;
     $stmt->close();

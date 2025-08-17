@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
     // --- Selectores de Elementos --- //
     const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
     const sections = document.querySelectorAll('.dashboard-section');
@@ -49,10 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
+            // Si es un enlace externo, navegar directamente a su URL.
             if (link.classList.contains('nav-link-external')) {
+                window.location.href = link.href;
                 return;
             }
 
+            // Si no, gestionarlo como un cambio de sección interno.
             e.preventDefault();
             const targetId = link.dataset.section;
             if (targetId) {
@@ -260,10 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`api/admin/products.php`, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `id=${id}`
-            });
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-Token': csrfToken, // Añadir el token CSRF
+            },
+            body: `id=${id}`
+        });
             const result = await response.json();
 
             if (result.success) {
@@ -278,9 +284,85 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Gestión de Pedidos (sin cambios) --- //
+    // --- Gestión de Pedidos ---
     async function loadOrders() {
-        // ... (código existente)
+        try {
+            const response = await fetch('api/orders.php');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const orders = await response.json();
+            
+            ordersTableBody.innerHTML = '';
+            if (orders.length === 0) {
+                ordersTableBody.innerHTML = '<tr><td colspan="9" class="text-center">No hay pedidos para mostrar.</td></tr>';
+                return;
+            }
+
+            orders.forEach(order => {
+                const row = ordersTableBody.insertRow();
+                const totalFormatted = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(order.total);
+                const orderDate = new Date(order.order_date).toLocaleString('es-AR');
+                const observaciones = order.observaciones ? order.observaciones.replace(/\n/g, '<br>') : '<em>Sin observaciones</em>';
+
+                row.innerHTML = `
+                    <td data-label="ID Pedido">${order.id}</td>
+                    <td data-label="Cliente">${order.customer_name}</td>
+                    <td data-label="Teléfono">${order.customer_phone}</td>
+                    <td data-label="Dirección">${order.customer_address || 'N/A'}</td>
+                    <td data-label="Observaciones">${observaciones}</td>
+                    <td data-label="Total">${totalFormatted}</td>
+                    <td data-label="Fecha">${orderDate}</td>
+                    <td data-label="Estado">
+                        <select class="form-select form-select-sm status-select" data-order-id="${order.id}">
+                            <option value="pendiente" ${order.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                            <option value="cotizacion_pendiente" ${order.status === 'cotizacion_pendiente' ? 'selected' : ''}>Cotización Pendiente</option>
+                            <option value="en_preparacion" ${order.status === 'en_preparacion' ? 'selected' : ''}>En Preparación</option>
+                            <option value="enviado" ${order.status === 'enviado' ? 'selected' : ''}>Enviado</option>
+                            <option value="entregado" ${order.status === 'entregado' ? 'selected' : ''}>Entregado</option>
+                            <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                        </select>
+                    </td>
+                    <td data-label="Acciones">
+                        <button class="btn btn-sm btn-info view-details-btn" data-order-id="${order.id}">Ver Detalles</button>
+                    </td>
+                `;
+            });
+
+            attachOrderEventListeners();
+
+        } catch (error) {
+            console.error('Error al cargar pedidos:', error);
+            ordersTableBody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error al cargar los pedidos.</td></tr>';
+        }
+    }
+
+    function attachOrderEventListeners() {
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+                const orderId = e.target.dataset.orderId;
+                const newStatus = e.target.value;
+                updateOrderStatus(orderId, newStatus);
+            });
+        });
+        // Aquí se podrían añadir listeners para el botón "Ver Detalles" en el futuro
+    }
+
+    async function updateOrderStatus(orderId, status) {
+        try {
+            const response = await fetch('api/orders.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: orderId, status: status })
+            });
+            const result = await response.json();
+            if (!result.success) {
+                alert('Error al actualizar el estado: ' + result.message);
+                loadOrders(); // Recargar para revertir el cambio visual
+            }
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            alert('Error de conexión al actualizar el estado.');
+            loadOrders();
+        }
     }
 
     // --- Gestión de Carrusel --- //
@@ -379,106 +461,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Gestión de Pedidos (sin cambios) --- //
-    async function loadOrders() {
-        // ... (código existente)
-    }
-
-    // --- Creación de Gráficos --- //
-    function initializeCharts() {
-        const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
+    // --- Carga de Estadísticas ---
+    async function initializeStats() {
+        try {
+            const response = await fetch('api/chart_data.php');
+            if (!response.ok) {
+                throw new Error(`Error al cargar datos de estadísticas: ${response.statusText}`);
             }
-        };
+            const statsData = await response.json();
 
-        // Gráfico de Top 5 Productos Más Vendidos
-        const topSoldCtx = document.getElementById('top-sold-chart')?.getContext('2d');
-        if (topSoldCtx && chartData.topSold.labels.length > 0) {
-            new Chart(topSoldCtx, {
-                type: 'bar',
-                data: {
-                    labels: chartData.topSold.labels,
-                    datasets: [{
-                        label: 'Unidades Vendidas',
-                        data: chartData.topSold.data,
-                        backgroundColor: 'rgba(28, 157, 17, 0.7)',
-                        borderColor: 'rgba(28, 157, 17, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: chartOptions
-            });
-        }
+            // Función auxiliar para crear la lista de estadísticas
+            const createStatList = (elementId, items, valueName) => {
+                const container = document.getElementById(elementId);
+                if (!container) return;
 
-        // Gráfico de Productos con Bajo Stock
-        const lowStockCtx = document.getElementById('low-stock-chart')?.getContext('2d');
-        if (lowStockCtx && chartData.lowStock.labels.length > 0) {
-            new Chart(lowStockCtx, {
-                type: 'bar',
-                data: {
-                    labels: chartData.lowStock.labels,
-                    datasets: [{
-                        label: 'Stock Actual',
-                        data: chartData.lowStock.data,
-                        backgroundColor: 'rgba(242, 132, 130, 0.7)',
-                        borderColor: 'rgba(242, 132, 130, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: { ...chartOptions, indexAxis: 'y' } // Gráfico de barras horizontales
-            });
-        }
+                if (!items || items.labels.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No hay datos disponibles.</p>';
+                    return;
+                }
 
-        // Gráfico de Top 5 Productos Más Vistos
-        const topViewedCtx = document.getElementById('top-viewed-chart')?.getContext('2d');
-        if (topViewedCtx && chartData.topViewed.labels.length > 0) {
-            new Chart(topViewedCtx, {
-                type: 'bar',
-                data: {
-                    labels: chartData.topViewed.labels,
-                    datasets: [{
-                        label: 'Vistas',
-                        data: chartData.topViewed.data,
-                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: chartOptions
-            });
-        }
+                const list = document.createElement('ul');
+                for (let i = 0; i < items.labels.length; i++) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span class="stat-label">${items.labels[i]}</span>
+                        <span class="stat-value">${items.data[i]} ${valueName}</span>
+                    `;
+                    list.appendChild(li);
+                }
+                container.innerHTML = '';
+                container.appendChild(list);
+            };
 
-        // Gráfico de Top 5 Productos con Más Interacción
-        const topInteractedCtx = document.getElementById('top-interacted-chart')?.getContext('2d');
-        if (topInteractedCtx && chartData.topInteracted.labels.length > 0) {
-            new Chart(topInteractedCtx, {
-                type: 'bar',
-                data: {
-                    labels: chartData.topInteracted.labels,
-                    datasets: [{
-                        label: 'Interacciones',
-                        data: chartData.topInteracted.data,
-                        backgroundColor: 'rgba(255, 206, 86, 0.7)',
-                        borderColor: 'rgba(255, 206, 86, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: chartOptions
-            });
+            // Renderizar cada lista de estadísticas
+            createStatList('top-sold-list', statsData.topSold, 'vendidos');
+            createStatList('low-stock-list', statsData.lowStock, 'en stock');
+            createStatList('top-viewed-list', statsData.topViewed, 'vistas');
+            createStatList('top-interacted-list', statsData.topInteracted, 'interacciones');
+
+        } catch (error) {
+            console.error('Error inicializando las estadísticas:', error);
         }
     }
 
     // --- Inicialización --- //
-    initializeCharts();
+    initializeStats();
     changeSection('stats');
 });

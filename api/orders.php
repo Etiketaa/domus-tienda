@@ -36,7 +36,7 @@ switch ($method) {
 }
 
 function handleGetOrders($conn) {
-    $sql = "SELECT id, customer_name, customer_phone, customer_address, total, order_date, status FROM orders ORDER BY order_date DESC";
+    $sql = "SELECT id, customer_name, customer_phone, customer_address, total, order_date, status, observaciones FROM orders ORDER BY order_date DESC";
     $result = $conn->query($sql);
 
     $orders = [];

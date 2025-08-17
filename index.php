@@ -1,4 +1,6 @@
 <?php
+require_once 'csp_handler.php';
+$nonce = set_csp_header();
 require_once 'config.php';
 
 // Array de frases motivadoras
@@ -206,6 +208,8 @@ $frase_del_dia = $frases[array_rand($frases)];
                                         <input type="tel" id="customer-phone" name="phone" required>
                                         <label for="customer-address">Dirección:</label>
                                         <input type="text" id="customer-address" name="address">
+                                        <label for="order-observations">Observaciones:</label>
+                                        <textarea id="order-observations" name="observations" rows="3" placeholder="Si pediste sahumerios u otros productos con variantes, detalla tus preferencias aquí. (Ej: 2 de sándalo, 1 de lavanda...)"></textarea>
                                     </form>
                                 </div>
                                 <p>Total: $<span id="cart-total">0,00</span></p>

@@ -1,9 +1,5 @@
 <?php
 
-// Incluir y establecer la Política de Seguridad de Contenido (CSP)
-require_once 'csp_handler.php';
-set_csp_header();
-
 // Configuración de la base de datos
 $db_host = 'localhost'; // Host de tu base de datos local
 $db_user = 'root'; // Usuario de tu base de datos local
@@ -26,4 +22,3 @@ if ($conn->connect_error) {
 
 // Establecer el charset a UTF-8
 $conn->set_charset("utf8");
-?>

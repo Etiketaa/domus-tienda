@@ -81,7 +81,7 @@ function handleGet($conn) {
         }
     } else {
         // Obtener todos los productos
-        $search_term = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING);
+        $search_term = htmlspecialchars($_GET['search'] ?? '', ENT_QUOTES, 'UTF-8');
         $products = getAllProducts($conn, $search_term);
         echo json_encode($products);
     }
@@ -209,7 +209,9 @@ function handleDeleteProduct($conn) {
         $stmt_main = $conn->prepare("SELECT image_url FROM products WHERE id = ?");
         $stmt_main->bind_param("i", $id);
         $stmt_main->execute();
-        $main_image_url = $stmt_main->get_result()->fetch_assoc()['image_url'];
+        $result = $stmt_main->get_result();
+        $main_image_data = $result->fetch_assoc();
+        $main_image_url = $main_image_data['image_url'] ?? null;
 
         $stmt_additional = $conn->prepare("SELECT image_url FROM product_images WHERE product_id = ?");
         $stmt_additional->bind_param("i", $id);
