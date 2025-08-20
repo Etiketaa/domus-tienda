@@ -139,6 +139,20 @@ function handleUpdate($conn) {
         return;
     }
 
+    // First, check if the product exists
+    $stmt_check = $conn->prepare("SELECT image_url FROM products WHERE id = ?");
+    $stmt_check->bind_param("i", $id);
+    $stmt_check->execute();
+    $result_check = $stmt_check->get_result();
+    if ($result_check->num_rows === 0) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'El producto que intenta actualizar no existe.']);
+        return;
+    }
+    $current_image_url = $result_check->fetch_assoc()['image_url'];
+    $stmt_check->close();
+
+
     $validation = validateProductData($_POST);
     if (!$validation['success']) {
         http_response_code(400);
@@ -150,12 +164,6 @@ function handleUpdate($conn) {
     $conn->begin_transaction();
 
     try {
-        // Obtener URL de imagen actual
-        $stmt_current = $conn->prepare("SELECT image_url FROM products WHERE id = ?");
-        $stmt_current->bind_param("i", $id);
-        $stmt_current->execute();
-        $current_image_url = $stmt_current->get_result()->fetch_assoc()['image_url'];
-        
         $image_url = $current_image_url;
 
         // Subir nueva imagen principal si se proporciona
