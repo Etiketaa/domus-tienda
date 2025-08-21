@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveProductBtn = document.getElementById('save-product-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
     const productsTableBody = document.querySelector('#products-table tbody');
-    const ordersTableBody = document.querySelector('#orders-table tbody');
+    
     const categoriesDatalist = document.getElementById('categories-datalist');
     const brandsDatalist = document.getElementById('brands-datalist');
     const productSearchBar = document.getElementById('product-search-bar');
@@ -32,79 +32,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let editingProductId = null;
 
-    // --- Navegación --- //
-    function changeSection(targetId) {
-        sections.forEach(s => s.classList.remove('active'));
-        navLinks.forEach(l => l.classList.remove('active'));
-        document.getElementById(targetId)?.classList.add('active');
-        document.querySelector(`.nav-link[data-section="${targetId}"]`)?.classList.add('active');
+    // La navegación ahora es manejada por PHP con recargas de página.
 
-        if (targetId === 'products') {
-            loadProducts();
-            loadCategoriesAndBrands();
-        } else if (targetId === 'orders') {
-            loadOrders();
-        } else if (targetId === 'carousel') {
-            loadCarouselImages();
-        }
-    }
+    // --- Gestión de Productos (MODIFICADO) --- //
 
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            // Si es un enlace externo, navegar directamente a su URL.
-            if (link.classList.contains('nav-link-external')) {
-                window.location.href = link.href;
-                return;
-            }
+    /*
+    La carga de productos y la función de eliminación ahora se manejan con PHP para simplificar.
+    El siguiente código JavaScript ha sido desactivado o modificado para reflejar estos cambios.
+    */
 
-            // Si no, gestionarlo como un cambio de sección interno.
-            e.preventDefault();
-            const targetId = link.dataset.section;
-            if (targetId) {
-                changeSection(targetId);
-            }
-        });
-    });
+    // La función loadProducts() está desactivada. La tabla se genera directamente en dashboard.php.
+    // async function loadProducts(searchTerm = '') { ... }
 
-    // --- Gestión de Productos --- //
-    async function loadProducts(searchTerm = '') {
-        try {
-            const url = `api/admin/products.php?search=${encodeURIComponent(searchTerm)}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const products = await response.json();
-            
-            productsTableBody.innerHTML = '';
-            products.forEach(product => {
-                const row = productsTableBody.insertRow();
-                const imageUrl = product.image_url || 'assets/images/placeholder.png';
-                row.innerHTML = `
-                    <td data-label="ID">${product.id}</td>
-                    <td data-label="Imagen"><img src="${imageUrl}" alt="${product.name}" class="product-thumbnail"></td>
-                    <td data-label="Nombre">${product.name}</td>
-                    <td data-label="Precio">$${parseFloat(product.price).toFixed(2)}</td>
-                    <td data-label="Stock">${product.stock}</td>
-                    <td data-label="Categoría">${product.category || 'N/A'}</td>
-                    <td data-label="Marca">${product.brand || 'N/A'}</td>
-                    <td data-label="Acciones">
-                        <div class="btn-group">
-                            <button class="edit-btn" data-id="${product.id}">Editar</button>
-                            <button class="delete-btn" data-id="${product.id}">Eliminar</button>
-                        </div>
-                    </td>
-                `;
-            });
-            attachProductEventListeners();
-        } catch (error) {
-            console.error('Error al cargar productos:', error);
-        }
-    }
+    // Los listeners de búsqueda están desactivados.
+    // productSearchButton.addEventListener('click', () => loadProducts(productSearchBar.value.trim()));
+    // productSearchBar.addEventListener('keyup', (e) => { ... });
 
-    productSearchButton.addEventListener('click', () => loadProducts(productSearchBar.value.trim()));
-    productSearchBar.addEventListener('keyup', (e) => {
-        if (e.key === 'Enter') loadProducts(productSearchBar.value.trim());
-    });
-
+    // Carga las categorías y marcas en los datalists del formulario, esta función se mantiene.
     async function loadCategoriesAndBrands() {
         try {
             const [catRes, brandRes] = await Promise.all([
@@ -120,10 +64,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Adjunta los listeners a los botones de editar generados por PHP y a los formularios de eliminación.
     function attachProductEventListeners() {
-        document.querySelectorAll('.edit-btn').forEach(b => b.onclick = () => editProduct(b.dataset.id));
-        document.querySelectorAll('.delete-btn').forEach(b => b.onclick = () => deleteProduct(b.dataset.id));
+        // Listener para botones de Editar
+        document.querySelectorAll('.edit-product-btn').forEach(b => b.onclick = () => editProduct(b.dataset.id));
+
+        // Listener para formularios de Eliminar
+        document.querySelectorAll('.delete-product-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                const confirmation = confirm('¿Estás seguro de que quieres eliminar este producto? Se borrarán también todas sus imágenes.');
+                if (!confirmation) {
+                    event.preventDefault(); // Cancela el envío del formulario si el usuario dice 'No'
+                }
+            });
+        });
     }
+    // Se llama una vez para que los botones de la tabla inicial funcionen.
+    attachProductEventListeners();
 
     productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -148,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let url = 'api/admin/products.php';
         if (editingProductId) {
             formData.append('id', editingProductId);
-            url += '?action=update'; // Acción explícita para actualizar
+            url += '?action=update';
         }
 
         try {
@@ -160,8 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (result.success) {
                 alert(result.message);
-                resetForm();
-                loadProducts();
+                // En lugar de recargar con JS, se recarga toda la página
+                // para mostrar la tabla actualizada desde PHP.
+                location.reload();
             } else {
                 alert(`Error: ${result.message}`);
             }
@@ -170,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Hubo un error de comunicación.');
         } finally {
             saveProductBtn.disabled = false;
-            resetForm();
+            // El reset del formulario se maneja con el reload de la página.
         }
     });
 
@@ -234,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const formData = new FormData();
-            formData.append('csrf_token', csrfToken); // Añadir token CSRF
+            formData.append('csrf_token', csrfToken);
             formData.append('image_id', imageId);
 
             const response = await fetch('api/admin/products.php?action=delete_image', {
@@ -245,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (result.success) {
                 alert(result.message);
-                // Volver a cargar las imágenes del producto que se está editando
                 if (editingProductId) {
                     editProduct(editingProductId);
                 }
@@ -258,112 +215,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function deleteProduct(id) {
-        if (!confirm('¿Estás seguro de eliminar este producto? Se borrarán todas sus imágenes.')) return;
+    // La función deleteProduct() está desactivada. La eliminación se hace con un formulario PHP.
+    // async function deleteProduct(id) { ... }
 
-        try {
-            const response = await fetch(`api/admin/products.php`, {
-                method: 'DELETE',
-                headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRF-Token': csrfToken, // Añadir el token CSRF
-            },
-            body: `id=${id}`
-        });
-            const result = await response.json();
-
-            if (result.success) {
-                alert(result.message);
-                loadProducts(); // Recargar la lista de productos
-            } else {
-                alert(`Error: ${result.message}`);
-            }
-        } catch (error) {
-            console.error('Error al eliminar producto:', error);
-            alert('Hubo un error de comunicación.');
-        }
-    }
-
-    // --- Gestión de Pedidos ---
-    async function loadOrders() {
-        try {
-            const response = await fetch('api/orders.php');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const orders = await response.json();
-            
-            ordersTableBody.innerHTML = '';
-            if (orders.length === 0) {
-                ordersTableBody.innerHTML = '<tr><td colspan="9" class="text-center">No hay pedidos para mostrar.</td></tr>';
-                return;
-            }
-
-            orders.forEach(order => {
-                const row = ordersTableBody.insertRow();
-                const totalFormatted = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(order.total);
-                const orderDate = new Date(order.order_date).toLocaleString('es-AR');
-                const observaciones = order.observaciones ? order.observaciones.replace(/\n/g, '<br>') : '<em>Sin observaciones</em>';
-
-                row.innerHTML = `
-                    <td data-label="ID Pedido">${order.id}</td>
-                    <td data-label="Cliente">${order.customer_name}</td>
-                    <td data-label="Teléfono">${order.customer_phone}</td>
-                    <td data-label="Dirección">${order.customer_address || 'N/A'}</td>
-                    <td data-label="Observaciones">${observaciones}</td>
-                    <td data-label="Total">${totalFormatted}</td>
-                    <td data-label="Fecha">${orderDate}</td>
-                    <td data-label="Estado">
-                        <select class="form-select form-select-sm status-select" data-order-id="${order.id}">
-                            <option value="pendiente" ${order.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-                            <option value="cotizacion_pendiente" ${order.status === 'cotizacion_pendiente' ? 'selected' : ''}>Cotización Pendiente</option>
-                            <option value="en_preparacion" ${order.status === 'en_preparacion' ? 'selected' : ''}>En Preparación</option>
-                            <option value="enviado" ${order.status === 'enviado' ? 'selected' : ''}>Enviado</option>
-                            <option value="entregado" ${order.status === 'entregado' ? 'selected' : ''}>Entregado</option>
-                            <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-                        </select>
-                    </td>
-                    <td data-label="Acciones">
-                        <button class="btn btn-sm btn-info view-details-btn" data-order-id="${order.id}">Ver Detalles</button>
-                    </td>
-                `;
-            });
-
-            attachOrderEventListeners();
-
-        } catch (error) {
-            console.error('Error al cargar pedidos:', error);
-            ordersTableBody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error al cargar los pedidos.</td></tr>';
-        }
-    }
-
-    function attachOrderEventListeners() {
-        document.querySelectorAll('.status-select').forEach(select => {
-            select.addEventListener('change', (e) => {
-                const orderId = e.target.dataset.orderId;
-                const newStatus = e.target.value;
-                updateOrderStatus(orderId, newStatus);
-            });
-        });
-        // Aquí se podrían añadir listeners para el botón "Ver Detalles" en el futuro
-    }
-
-    async function updateOrderStatus(orderId, status) {
-        try {
-            const response = await fetch('api/orders.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: orderId, status: status })
-            });
-            const result = await response.json();
-            if (!result.success) {
-                alert('Error al actualizar el estado: ' + result.message);
-                loadOrders(); // Recargar para revertir el cambio visual
-            }
-        } catch (error) {
-            console.error('Error updating order status:', error);
-            alert('Error de conexión al actualizar el estado.');
-            loadOrders();
-        }
-    }
+    
 
     // --- Gestión de Carrusel --- //
     async function loadCarouselImages() {
@@ -504,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Inicialización --- //
+    // --- Inicialización ---
     initializeStats();
-    changeSection('stats');
+    // changeSection('stats'); // Se desactiva para que PHP controle la pestaña activa al cargar la página.
 });

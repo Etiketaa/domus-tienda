@@ -1,5 +1,8 @@
 <?php
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 // Manejo de errores y excepciones para devolver siempre JSON
 set_exception_handler(function ($exception) {
     error_log('Unhandled Exception: ' . $exception->getMessage() . ' in ' . $exception->getFile() . ' on line ' . $exception->getLine());
@@ -27,8 +30,9 @@ set_error_handler(function ($severity, $message, $file, $line) {
 });
 
 require_once '../../config.php';
+require_once '../../csrf_handler.php';
 
-header('Content-Type: application/json');
+// header('Content-Type: application/json'); // Comentado para depurar la redirección del borrado
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
@@ -41,7 +45,14 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$action = $_GET['action'] ?? null;
+
+// Determinar la acción basado en el método de la petición
+$action = null;
+if ($method === 'POST') {
+    $action = $_POST['action'] ?? null;
+} else { // Para GET, DELETE, etc.
+    $action = $_GET['action'] ?? null;
+}
 
 switch ($method) {
     case 'GET':
@@ -52,13 +63,17 @@ switch ($method) {
             handleUpdate($conn);
         } elseif ($action === 'delete_image') {
             handleDeleteImage($conn);
+        } elseif ($action === 'delete') {
+            handleDeleteProductPost($conn); // <-- AÑADIDO EL CASO DE BORRADO
         } else {
+            // La acción por defecto para POST es crear un producto
             handleCreate($conn);
         }
         break;
+    // El método DELETE original ya no se usa para eliminar productos, se puede quitar o dejar por si se usa para otra cosa.
     case 'DELETE':
         verify_csrf_and_exit();
-        handleDeleteProduct($conn);
+        handleDeleteProduct($conn); // Esta es la función antigua
         break;
     default:
         http_response_code(405);
@@ -67,6 +82,71 @@ switch ($method) {
 }
 
 // --- Funciones de Manejo ---
+
+function handleDeleteProductPost($conn) {
+    $id = filter_input(INPUT_POST, 'product_id', FILTER_VALIDATE_INT);
+
+    if (!$id) {
+        // Si el ID no es válido, redirigir con un mensaje de error.
+        header('Location: ../../dashboard.php?section=products&status=error&message=InvalidID');
+        exit();
+    }
+
+    $conn->begin_transaction();
+
+    try {
+        // 1. Obtener URLs de imágenes (código existente reutilizado)
+        $stmt_main = $conn->prepare("SELECT image_url FROM products WHERE id = ?");
+        $stmt_main->bind_param("i", $id);
+        $stmt_main->execute();
+        $result = $stmt_main->get_result();
+        $main_image_url = ($result->fetch_assoc())['image_url'] ?? null;
+        $stmt_main->close();
+
+        $stmt_additional = $conn->prepare("SELECT image_url FROM product_images WHERE product_id = ?");
+        $stmt_additional->bind_param("i", $id);
+        $stmt_additional->execute();
+        $additional_images_result = $stmt_additional->get_result();
+        $stmt_additional->close();
+
+        // 2. Eliminar imágenes del servidor
+        if ($main_image_url && file_exists('../../' . $main_image_url)) {
+            unlink('../../' . $main_image_url);
+        }
+        while ($row = $additional_images_result->fetch_assoc()) {
+            if ($row['image_url'] && file_exists('../../' . $row['image_url'])) {
+                unlink('../../' . $row['image_url']);
+            }
+        }
+
+        // 3. Eliminar registros de la base de datos
+        $stmt_delete_additional = $conn->prepare("DELETE FROM product_images WHERE product_id = ?");
+        $stmt_delete_additional->bind_param("i", $id);
+        $stmt_delete_additional->execute();
+        $stmt_delete_additional->close();
+
+        $stmt_delete_product = $conn->prepare("DELETE FROM products WHERE id = ?");
+        $stmt_delete_product->bind_param("i", $id);
+        $stmt_delete_product->execute();
+        
+        if ($stmt_delete_product->affected_rows > 0) {
+            $conn->commit();
+            // Redirigir con mensaje de éxito
+            header('Location: ../../dashboard.php?section=products&status=deleted');
+            exit();
+        } else {
+            throw new Exception('No se encontró el producto para eliminar o ya fue eliminado.');
+        }
+        $stmt_delete_product->close();
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log('Error en handleDeleteProductPost: ' . $e->getMessage());
+        // Redirigir con mensaje de error genérico
+        header('Location: ../../dashboard.php?section=products&status=error&message=Exception');
+        exit();
+    }
+}
 
 function handleGet($conn) {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
@@ -220,11 +300,15 @@ function handleDeleteProduct($conn) {
         $result = $stmt_main->get_result();
         $main_image_data = $result->fetch_assoc();
         $main_image_url = $main_image_data['image_url'] ?? null;
+        $stmt_main->close(); // Close statement
+        $result->free(); // Free result set
 
         $stmt_additional = $conn->prepare("SELECT image_url FROM product_images WHERE product_id = ?");
         $stmt_additional->bind_param("i", $id);
         $stmt_additional->execute();
         $additional_images_result = $stmt_additional->get_result();
+        $stmt_additional->close(); // Close statement
+        $additional_images_result->free(); // Free result set
 
         // 2. Eliminar imágenes del servidor
         if ($main_image_url && file_exists('../../' . $main_image_url)) {
@@ -240,11 +324,13 @@ function handleDeleteProduct($conn) {
         $stmt_delete_additional = $conn->prepare("DELETE FROM product_images WHERE product_id = ?");
         $stmt_delete_additional->bind_param("i", $id);
         $stmt_delete_additional->execute();
+        $stmt_delete_additional->close(); // Close statement
 
         // 4. Eliminar el producto de la base de datos
         $stmt_delete_product = $conn->prepare("DELETE FROM products WHERE id = ?");
         $stmt_delete_product->bind_param("i", $id);
         $stmt_delete_product->execute();
+        $stmt_delete_product->close(); // Close statement
 
         if ($stmt_delete_product->affected_rows > 0) {
             $conn->commit();

@@ -234,9 +234,9 @@ main {
 }
 
 /* Cart Modal Styles */
-#cartModal .modal-dialog {
+/* #cartModal .modal-dialog {
     max-width: 800px;
-}
+} */ /* Comentado para permitir que las clases de Bootstrap controlen el tamaño */
 
 #cartModal .modal-body {
     padding: 2rem;
@@ -323,87 +323,20 @@ footer a:hover {
     text-decoration: underline;
 }
 
-/* Dashboard Modern Styles */
-.dashboard-body {
-    background-color: var(--fondo);
-    display: flex;
-}
-
-.dashboard-container {
-    display: flex;
-    width: 100%;
-    min-height: 100vh;
-}
-
-.dashboard-sidebar {
-    width: 260px;
-    background-color: var(--principal);
-    border-right: 1px solid var(--borde-suave);
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem;
-}
-
-.sidebar-header {
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.sidebar-header .header-logo {
-    max-width: 150px;
-}
-
-.sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.sidebar-nav .nav-link {
-    color: var(--texto-secundario);
-    text-decoration: none;
-    padding: 0.8rem 1rem;
-    border-radius: 8px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    transition: all 0.3s ease;
-}
-
-.sidebar-nav .nav-link:hover {
-    background-color: var(--fondo);
-    color: var(--acento-verde);
-}
-
-.sidebar-nav .nav-link.active {
-    background-color: var(--acento-verde);
-    color: var(--principal);
-}
-
-.dashboard-main-content {
-    flex: 1;
-    padding: 2rem;
-    overflow-y: auto;
-}
-
+/* Dashboard Modern Styles - Modificado para Navegación Superior */
 .dashboard-section {
-    display: none; /* Oculto por defecto */
-}
-
-.dashboard-section.active {
-    display: block; /* Visible la sección activa */
+    display: none; /* Oculto por defecto, PHP lo cambia a display: block; */
 }
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Ancho mínimo reducido */
+    gap: 1.2rem; /* Espaciado reducido */
 }
 
 .stat-card {
     background-color: var(--principal);
-    padding: 1.5rem;
+    padding: 1.2rem; /* Padding reducido */
     border-radius: 12px;
     border: 1px solid var(--borde-suave);
     box-shadow: var(--sombra);
@@ -429,7 +362,7 @@ footer a:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.9rem;
+    font-size: 0.8rem; /* Reducido para consistencia */
     padding: 0.4rem 0;
     border-bottom: 1px solid var(--borde-suave);
 }

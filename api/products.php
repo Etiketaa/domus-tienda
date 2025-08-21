@@ -11,7 +11,6 @@ function output_json($data, $statusCode = 200) {
 
 // Function to generate a single product card HTML
 function render_product_card($product) {
-    $is_ap_brand = (!empty($product['brand']) && strtolower($product['brand']) == 'ap');
     $image_url = !empty($product['image_url']) ? htmlspecialchars($product['image_url']) : 'assets/images/placeholder.png';
     $product_name = htmlspecialchars($product['name']);
     $product_brand = htmlspecialchars($product['brand'] ?? '');
@@ -24,18 +23,15 @@ function render_product_card($product) {
         $html .= "<p class='brand'>{$product_brand}</p>";
     }
 
-    if ($is_ap_brand) {
-        $html .= "<p class='price-ap'>Precio a consultar</p>";
-    } else {
-        $html .= "<p class='price'>$" . number_format($product['price'], 2, ',', '.') . "</p>";
-    }
-
-    $html .= "<button class='details-btn' data-id='{$product['id']}'>Detalles</button>";
-
     if ($product['stock'] > 0) {
+        $html .= "<p class='price'>$" . number_format($product['price'], 2, ',', '.') . "</p>";
+        $html .= "<button class='details-btn' data-id='{$product['id']}'>Detalles</button>";
         $html .= "<button class='add-to-cart-btn' data-id='{$product['id']}'>Añadir al Carrito</button>";
     } else {
-        $html .= "<p class='out-of-stock'>Sin stock</p>";
+        // Si no hay stock, se muestra un botón para encargar.
+        $html .= "<div style='height: 2.4em;'><!-- Placeholder for price --></div>"; 
+        $html .= "<button class='details-btn' data-id='{$product['id']}'>Detalles</button>";
+        $html .= "<button class='add-to-cart-btn on-order-btn' data-id='{$product['id']}'>Encargar</button>";
     }
     $html .= "</div>";
 
@@ -100,7 +96,7 @@ try {
         $sql .= " WHERE " . implode(' AND ', $whereClauses);
     }
 
-    $sql .= " ORDER BY name";
+    $sql .= " ORDER BY stock DESC";
 
     $stmt = $conn->prepare($sql);
     if (!empty($params)) {

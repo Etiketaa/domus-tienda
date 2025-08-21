@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
         category: $('#modal-product-category'),
         brand: $('#modal-product-brand'),
         gallery: $('#modal-product-gallery'),
-        addToCartBtn: $('#modal-add-to-cart-btn')
+        addToCartBtn: $('#modal-add-to-cart-btn'),
+        onOrderNotice: $('#modal-on-order-notice') // Contenedor para el aviso de encargo
     };
 
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -55,12 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('cart', JSON.stringify(cart));
     };
 
-    const addToCart = (id, name, price, brand) => {
+    const addToCart = (id, name, price, brand, onOrder = false) => {
         const existingItem = cart.find(item => item.id === id);
         if (existingItem) {
             existingItem.quantity++;
         } else {
-            cart.push({ id, name, price, quantity: 1, brand });
+            cart.push({ id, name, price, quantity: 1, brand, onOrder });
         }
         saveCart();
         renderCart();
@@ -97,21 +98,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderCart = () => {
         cartItemsContainer.innerHTML = '';
         let total = 0;
-        let containsApBrand = false;
+        let hasOnOrderItems = cart.some(item => item.onOrder);
 
         if (cart.length === 0) {
             cartItemsContainer.innerHTML = '<p class="empty-cart-message">Tu carrito está vacío.</p>';
         } else {
             cart.forEach(item => {
-                const isAp = item.brand && item.brand.toLowerCase() === 'ap';
-                if (isAp) containsApBrand = true;
-
+                const onOrderLabel = item.onOrder ? ' <small class="text-muted">(por encargo)</small>' : '';
                 const itemElement = document.createElement('div');
                 itemElement.classList.add('cart-item');
                 itemElement.innerHTML = `
                     <div class="cart-item-info">
-                        <span class="cart-item-name">${item.name}</span>
-                        <span class="cart-item-price">${isAp ? 'A consultar' : formatPrice(item.price)}</span>
+                        <span class="cart-item-name">${item.name}${onOrderLabel}</span>
+                        <span class="cart-item-price">${formatPrice(item.price)}</span>
                     </div>
                     <div class="cart-item-quantity">
                         <button class="quantity-btn" data-id="${item.id}" data-action="decrease">-</button>
@@ -121,19 +120,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
                 cartItemsContainer.appendChild(itemElement);
-                if (!isAp) {
-                    total += item.price * item.quantity;
-                }
+                total += item.price * item.quantity;
             });
         }
 
-        if (containsApBrand) {
-            cartTotalElement.innerHTML = '<span class="price-ap">Total a coordinar</span>';
-            checkoutBtn.textContent = 'Solicitar Cotización';
+        const onOrderNoticeEl = document.getElementById('cart-on-order-notice');
+        if (hasOnOrderItems) {
+            onOrderNoticeEl.innerHTML = '<b>Atención:</b> Los productos indicados como \'(por encargo)\' tienen una demora de entrega de 10-15 días.';
+            onOrderNoticeEl.style.display = 'block';
         } else {
-            cartTotalElement.textContent = formatPrice(total);
-            checkoutBtn.textContent = 'Confirmar Pedido';
+            onOrderNoticeEl.style.display = 'none';
         }
+
+        cartTotalElement.textContent = formatPrice(total);
+        checkoutBtn.textContent = 'Confirmar Pedido';
 
         updateCartCount();
     };
@@ -190,13 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const isApBrand = product.brand && product.brand.toLowerCase() === 'ap';
             const mainImageUrl = product.image_url || 'assets/images/placeholder.png';
 
             productDetailsModal.image.attr('src', mainImageUrl).attr('loading', 'lazy');
             productDetailsModal.name.text(product.name);
             productDetailsModal.description.text(product.description || 'No hay descripción disponible.');
-            productDetailsModal.price.html(isApBrand ? '<span class="price-ap">Precio a consultar por WhatsApp</span>' : formatPrice(product.price));
+            productDetailsModal.price.html(formatPrice(product.price));
             productDetailsModal.category.text(product.category || 'N/A');
             productDetailsModal.brand.text(product.brand || 'N/A');
 
@@ -209,16 +208,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Add to cart button
-            if (product.stock > 0 && !isApBrand) {
-                productDetailsModal.addToCartBtn.show().data({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    brand: product.brand
-                });
+            // Botón de añadir al carrito y aviso de encargo
+            productDetailsModal.addToCartBtn.data({ // Asignar siempre los datos al botón
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                brand: product.brand
+            });
+
+            if (product.stock > 0) {
+                // Si hay stock
+                productDetailsModal.price.show();
+                productDetailsModal.onOrderNotice.hide();
+                productDetailsModal.addToCartBtn.text('Añadir al Carrito').show();
             } else {
-                productDetailsModal.addToCartBtn.hide();
+                // Si no hay stock (se puede encargar)
+                productDetailsModal.price.hide();
+                productDetailsModal.onOrderNotice.html("<b>Nota:</b> Este producto no está en stock. Puedes encargarlo y te notificaremos cuando llegue (demora aproximada: 10-15 días).").show();
+                productDetailsModal.addToCartBtn.text('Encargar').show();
             }
 
             productDetailsModal.modal.modal('show');
@@ -259,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const handleCheckout = async () => {
+    const handleWhatsAppCheckout = () => {
         const customerName = customerForm.querySelector('#customer-name').value.trim();
         const customerPhone = customerForm.querySelector('#customer-phone').value.trim();
         const customerAddress = customerForm.querySelector('#customer-address').value.trim();
@@ -275,50 +282,47 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        checkoutBtn.classList.add('loading');
-        checkoutBtn.disabled = true;
-        checkoutBtn.textContent = 'Procesando...';
-
-        const orderData = {
-            customer: { name: customerName, phone: customerPhone, address: customerAddress },
-            items: cart,
-            observaciones: orderObservations,
-            total: parseFloat(cartTotalElement.textContent)
-        };
-
-        try {
-            const response = await fetch('api/create-order.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
-            });
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById('order-observations').value = ''; // Limpiar campo
-                alert(data.message || `¡Pedido #${data.order_id} realizado con éxito!`);
-                cart = [];
-                saveCart();
-                renderCart();
-                customerForm.reset();
-                cartModal.hide();
-            } else {
-                alert('Error al crear el pedido: ' + (data.message || 'Inténtalo de nuevo.'));
-            }
-        } catch (error) {
-            console.error('Checkout fetch error:', error);
-            alert('Hubo un problema de conexión.');
-        } finally {
-            checkoutBtn.classList.remove('loading');
-            checkoutBtn.disabled = false;
-            renderCart(); // Re-render para actualizar el estado del botón
+        let message = `¡Hola! Quisiera hacer el siguiente pedido:\n\n`;
+        message += `*Cliente:* ${customerName}\n`;
+        message += `*Teléfono:* ${customerPhone}\n`;
+        if (customerAddress) {
+            message += `*Dirección:* ${customerAddress}\n`;
         }
+        message += `\n*Pedido:*\n`;
+
+        let total = 0;
+
+        cart.forEach(item => {
+            message += `- ${item.quantity}x ${item.name} - ${formatPrice(item.price * item.quantity)}\n`;
+            total += item.price * item.quantity;
+        });
+
+        message += `\n`;
+        message += `*Total:* ${formatPrice(total)}\n`;
+
+        if (orderObservations) {
+            message += `\n*Observaciones:* ${orderObservations}\n`;
+        }
+
+        const whatsappNumber = '5492212025315';
+        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+        window.open(whatsappUrl, '_blank');
+
+        // Clear cart and form
+        cart = [];
+        saveCart();
+        renderCart();
+        customerForm.reset();
+        document.getElementById('order-observations').value = '';
+        cartModal.hide();
     };
 
 
     // --- EVENT LISTENERS ---
 
     if (openCartBtn) openCartBtn.addEventListener('click', () => cartModal.show());
-    if (checkoutBtn) checkoutBtn.addEventListener('click', handleCheckout);
+    if (checkoutBtn) checkoutBtn.addEventListener('click', handleWhatsAppCheckout);
 
     if (cartItemsContainer) {
         cartItemsContainer.addEventListener('click', (e) => {
@@ -347,7 +351,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const priceElement = productCard.querySelector('.price');
                 const productPrice = priceElement ? parseFloat(priceElement.textContent.replace(/[^0-9,-]+/g,"").replace(",", ".")) : 0;
                 const productBrand = productCard.querySelector('.brand')?.textContent || '';
-                addToCart(productId, productName, productPrice, productBrand);
+                const isOnOrder = target.classList.contains('on-order-btn');
+                addToCart(productId, productName, productPrice, productBrand, isOnOrder);
                 logInteraction(productId, 'add_to_cart_click');
             } else if (target.classList.contains('details-btn')) {
                 showProductDetails(productId);
@@ -400,7 +405,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     productDetailsModal.addToCartBtn.on('click', function() {
         const { id, name, price, brand } = $(this).data();
-        addToCart(id, name, price, brand);
+        const isOnOrder = $(this).text() === 'Encargar'; // Comprueba si es un encargo
+        addToCart(id, name, price, brand, isOnOrder); // Pasa el estado a la función
         logInteraction(id, 'add_to_cart_click');
         productDetailsModal.modal.modal('hide');
     });
